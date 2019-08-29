@@ -35,7 +35,7 @@ function getBoidsInSight(self:Boid,maxangle:number,radius:number){
         if(self == boid){
             continue
         }
-        if(self.pos.to(boid.pos).length() <= radius && self.speed.dot(self.pos.to(boid.pos).normalize()) >= 0){
+        if(self.cachepos.to(boid.cachepos).length() <= radius && self.cachespeed.dot(self.cachepos.to(boid.cachepos).normalize()) >= map(maxangle,0,0.5,1,-1)){
             res.push(boid)
         }
     }

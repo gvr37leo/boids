@@ -27,11 +27,15 @@ loop((dt) => {
     ctxt.clearRect(0,0,500,500)
     for(var boid of boids){
         cacheBoid(boid)
+        var acc = new Vector(0,0)
+        var sepforce = separation(boid)
+        var cohforce = cohesion(boid)
+        var aliforce = alignment(boid)
+        acc.add(sepforce)
+        acc.add(cohforce)
+        acc.add(aliforce)
 
-        separation(boid)
-        cohesion(boid)
-        alignment(boid)
-
+        boid.speed.add(acc.scale(dt))
         boid.pos.add(boid.speed.c().scale(dt))
         boid.pos.x %= screensize.x
         boid.pos.y %= screensize.y
@@ -47,25 +51,25 @@ loop((dt) => {
 function separation(self:Boid):Vector{
     var boids = getBoidsInSight(self,0.25,10)
     var avg = calcAvgPos(boids)
-    var dir = self.pos.to(avg).scale(-1)
+    var dir = self.cachepos.to(avg).scale(-1)
     return dir
 }
 
 function cohesion(self:Boid):Vector{// steer to average position
     var boids = getBoidsInSight(self,0.25,50)
     var avg = calcAvgPos(boids)
-    var dir = self.pos.to(avg)
+    var dir = self.cachepos.to(avg)
     return dir
 }
 
 function alignment(self:Boid):Vector{//steer to average heading
     var boids = getBoidsInSight(self,0.25,10)
-    var avg = boids.reduce((acc,boid) => acc.add(boid.speed.c().normalize()),new Vector(0,0)).scale(1 / boids.length)
+    var avg = boids.reduce((acc,boid) => acc.add(boid.cachespeed.c().normalize()),new Vector(0,0)).scale(1 / boids.length)
     return avg
 }
 
 function calcAvgPos(boids:Boid[]){
-    return boids.reduce((acc,boid) => acc.add(boid.pos),new Vector(0,0)).scale(1 / boids.length)
+    return boids.reduce((acc,boid) => acc.add(boid.cachepos),new Vector(0,0)).scale(1 / boids.length)
 }
 
 
