@@ -2,6 +2,7 @@
 /// <reference path="node_modules/vectorx/vector.ts" />
 /// <reference path="boid.ts" />
 /// <reference path="utils.ts" />
+/// <reference path="projectutils.ts" />
 
 
 var screensize = new Vector(500,500)
@@ -22,15 +23,18 @@ for(var i = 0; i < 5; i++){
     ))
 }
 
+
 loop((dt) => {
     dt /= 1000
     ctxt.clearRect(0,0,500,500)
     for(var boid of boids){
         cacheBoid(boid)
+    }
+    for(var boid of boids){
         var acc = new Vector(0,0)
-        var sepforce = separation(boid)
-        var cohforce = cohesion(boid)
-        var aliforce = alignment(boid)
+        var sepforce = map(Dist2AverageNeighbour(boid,50).length(),0,50,0,-100) 
+        var cohforce = map(Dist2AverageNeighbour(boid,400).length(),0,400,0,50)
+        var aliforce = averageSpeedOfNeighbours(boid)
         acc.add(sepforce)
         acc.add(cohforce)
         acc.add(aliforce)
@@ -48,22 +52,21 @@ loop((dt) => {
 })
 
 
-function separation(self:Boid):Vector{
-    var boids = getBoidsInSight(self,0.25,10)
-    var avg = calcAvgPos(boids)
-    var dir = self.cachepos.to(avg).scale(-1)
-    return dir
-}
-
-function cohesion(self:Boid):Vector{// steer to average position
-    var boids = getBoidsInSight(self,0.25,50)
+function Dist2AverageNeighbour(self:Boid,lookradius:number):Vector{
+    var boids = getBoidsInSight(self,0.25,lookradius)
+    if(boids.length == 0){
+        return new Vector(0,0)
+    }
     var avg = calcAvgPos(boids)
     var dir = self.cachepos.to(avg)
     return dir
 }
 
-function alignment(self:Boid):Vector{//steer to average heading
+function averageSpeedOfNeighbours(self:Boid):Vector{//steer to average heading
     var boids = getBoidsInSight(self,0.25,10)
+    if(boids.length == 0){
+        return new Vector(0,0)
+    }
     var avg = boids.reduce((acc,boid) => acc.add(boid.cachespeed.c().normalize()),new Vector(0,0)).scale(1 / boids.length)
     return avg
 }
