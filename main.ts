@@ -12,20 +12,23 @@ var canvas = crret.canvas
 var ctxt = crret.ctxt
 var TAU = Math.PI * 2
 
-
+var cohrange = 200
+var seprange = 50
+var alignrange = 150
 var rng = new RNG(0)
 var boids:Boid[] = []
 var speed = 100
-for(var i = 0; i < 5; i++){
+for(var i = 0; i < 20; i++){
     boids.push(new Boid(
         new Vector(rng.range(0,500), rng.range(0,500)),
-        new Vector(rng.norm(),rng.norm()).normalize().scale(speed),
+        new Vector(rng.norm(),rng.norm()).sub(new Vector(0.5, 0.5)).normalize().scale(speed),
     ))
 }
 
 
 loop((dt) => {
     dt /= 1000
+    dt = clamp(dt,0.002,0.10)
     ctxt.clearRect(0,0,500,500)
     for(var boid of boids){
         cacheBoid(boid)
@@ -33,23 +36,41 @@ loop((dt) => {
     for(var boid of boids){
         var acc = new Vector(0,0)
 
-        var dist2AverageNeighbour = calcDist2AverageNeighbour(boid,500)
-        var sepforce = dist2AverageNeighbour.c().normalize().scale(map(dist2AverageNeighbour.length(),0,50,0,-100))
-        var cohforce = dist2AverageNeighbour.c().normalize().scale(map(dist2AverageNeighbour.length(),0,400,0,50))
-        var aliforce = averageSpeedOfNeighbours(boid)
+        
+        var sepforce = new Vector(0,0)
+        var cohforce = new Vector(0,0)
+        var aliforce = new Vector(0,0)
+
+        var dist2AverageNeighbourCoh = calcDist2AverageNeighbour(boid,cohrange)
+        var dist2AverageNeighbourSep = calcDist2AverageNeighbour(boid,seprange)
+        var averageDirectionOfNeighbours = calcDirectionOfNeighbours(boid)
+        if(dist2AverageNeighbourCoh.length() > 0){
+            cohforce = dist2AverageNeighbourCoh.c().normalize().scale(clamp(map(dist2AverageNeighbourCoh.length(),0,cohrange,50,20),0,50))
+        }
+
+        if(dist2AverageNeighbourSep.length() > 0){
+            sepforce = dist2AverageNeighbourSep.c().normalize().scale(clamp(map(dist2AverageNeighbourSep.length(),40,seprange,-100,0),-100,0))
+        }
+        
+        if(averageDirectionOfNeighbours.length() > 0){
+            aliforce = averageDirectionOfNeighbours.c().normalize().scale(clamp(map(averageDirectionOfNeighbours.length(),0,1,40,80),0,80))
+        }
+        
         acc.add(sepforce)
         acc.add(cohforce)
         acc.add(aliforce)
-
+        clampMagnitude(acc,0,100)
         boid.speed.add(acc.scale(dt))
+        clampMagnitude(boid.speed,80,130)
         boid.pos.add(boid.speed.c().scale(dt))
-        boid.pos.x %= screensize.x
-        boid.pos.y %= screensize.y
+        boid.pos.x = mod(boid.pos.x,screensize.x)
+        boid.pos.y = mod(boid.pos.y,screensize.y)
     }
 
     for(var boid of boids){
-        drawBoid(boid)   
+        drawBoid(boid)
     }
+    // debugDrawBoid(boids[0])
 
 })
 
@@ -64,8 +85,8 @@ function calcDist2AverageNeighbour(self:Boid,lookradius:number):Vector{
     return dir
 }
 
-function averageSpeedOfNeighbours(self:Boid):Vector{//steer to average heading
-    var boids = getBoidsInSight(self,0.25,10)
+function calcDirectionOfNeighbours(self:Boid):Vector{//steer to average heading
+    var boids = getBoidsInSight(self,3/8,alignrange)
     if(boids.length == 0){
         return new Vector(0,0)
     }
