@@ -32,8 +32,10 @@ loop((dt) => {
     }
     for(var boid of boids){
         var acc = new Vector(0,0)
-        var sepforce = map(Dist2AverageNeighbour(boid,50).length(),0,50,0,-100) 
-        var cohforce = map(Dist2AverageNeighbour(boid,400).length(),0,400,0,50)
+
+        var dist2AverageNeighbour = calcDist2AverageNeighbour(boid,500)
+        var sepforce = dist2AverageNeighbour.c().normalize().scale(map(dist2AverageNeighbour.length(),0,50,0,-100))
+        var cohforce = dist2AverageNeighbour.c().normalize().scale(map(dist2AverageNeighbour.length(),0,400,0,50))
         var aliforce = averageSpeedOfNeighbours(boid)
         acc.add(sepforce)
         acc.add(cohforce)
@@ -52,7 +54,7 @@ loop((dt) => {
 })
 
 
-function Dist2AverageNeighbour(self:Boid,lookradius:number):Vector{
+function calcDist2AverageNeighbour(self:Boid,lookradius:number):Vector{
     var boids = getBoidsInSight(self,0.25,lookradius)
     if(boids.length == 0){
         return new Vector(0,0)
