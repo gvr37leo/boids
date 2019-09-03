@@ -24,7 +24,10 @@ for(var i = 0; i < 20; i++){
         new Vector(rng.norm(),rng.norm()).sub(new Vector(0.5, 0.5)).normalize().scale(speed),
     ))
 }
-
+var mousepos = new Vector(0,0)
+document.addEventListener('mousemove',e => {
+    mousepos = getMousePos(canvas,e)
+})
 
 loop((dt) => {
     dt /= 1000
@@ -33,6 +36,7 @@ loop((dt) => {
     for(var boid of boids){
         cacheBoid(boid)
     }
+    
     for(var boid of boids){
         var acc = new Vector(0,0)
 
@@ -44,6 +48,7 @@ loop((dt) => {
         var dist2AverageNeighbourCoh = calcDist2AverageNeighbour(boid,cohrange)
         var dist2AverageNeighbourSep = calcDist2AverageNeighbour(boid,seprange)
         var averageDirectionOfNeighbours = calcDirectionOfNeighbours(boid)
+        var dst2mousepos = boid.cachepos.to(mousepos)
         if(dist2AverageNeighbourCoh.length() > 0){
             cohforce = dist2AverageNeighbourCoh.c().normalize().scale(clamp(map(dist2AverageNeighbourCoh.length(),0,cohrange,50,20),0,50))
         }
@@ -55,6 +60,11 @@ loop((dt) => {
         if(averageDirectionOfNeighbours.length() > 0){
             aliforce = averageDirectionOfNeighbours.c().normalize().scale(clamp(map(averageDirectionOfNeighbours.length(),0,1,40,80),0,80))
         }
+
+        if(dst2mousepos.length() > 0){
+            acc.add(dst2mousepos.c().normalize().scale(clamp(map(dst2mousepos.length(),80,100,-300,0),-300,0)))
+        }
+        
         
         acc.add(sepforce)
         acc.add(cohforce)
