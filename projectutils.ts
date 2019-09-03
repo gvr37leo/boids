@@ -19,3 +19,13 @@ function clampMagnitude(v:Vector,min:number,max:number):Vector{
 function setMagnitude(v:Vector,magnitude:number):Vector{
     return v.scale(magnitude / v.length())
 }
+
+RNG.prototype.norm = function(){
+    return this.next() / this.mod
+}
+
+
+RNG.prototype.range = function(min:number,max:number){
+    return this.norm() * to(min,max) + min
+}
+
