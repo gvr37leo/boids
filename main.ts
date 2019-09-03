@@ -5,7 +5,7 @@
 /// <reference path="projectutils.ts" />
 
 
-var screensize = new Vector(500,500)
+var screensize = new Vector(document.documentElement.clientWidth,document.documentElement.clientHeight-4)
 
 var crret = createCanvas(screensize.x,screensize.y)
 var canvas = crret.canvas
@@ -18,25 +18,50 @@ var alignrange = 150
 var rng = new RNG(0)
 var boids:Boid[] = []
 var speed = 100
-for(var i = 0; i < 20; i++){
+for(var i = 0; i < 100; i++){
     boids.push(new Boid(
-        new Vector(rng.range(0,500), rng.range(0,500)),
+        new Vector(rng.range(0,screensize.x), rng.range(0,screensize.y)),
         new Vector(rng.norm(),rng.norm()).sub(new Vector(0.5, 0.5)).normalize().scale(speed),
     ))
 }
-var mousepos = new Vector(0,0)
+var mousepos = screensize.c().scale(0.5)
 document.addEventListener('mousemove',e => {
     mousepos = getMousePos(canvas,e)
 })
+var mousedown = false
+document.addEventListener('mousedown', () => {
+    mousedown = true
+})
+document.addEventListener('mouseup', () => {
+    mousedown = false
+})
+var backgroundanim = new Anim()
+backgroundanim.animType = AnimType.repeat
+backgroundanim.stopwatch.start()
+backgroundanim.begin = 0
+backgroundanim.end = 360
+backgroundanim.duration = 60 * 1000
+ctxt.fillRect(0,0,screensize.x,screensize.y)
+
+var windstrength = 40
+var winddirectionanim = new Anim()
+winddirectionanim.animType = AnimType.repeat
+winddirectionanim.stopwatch.start()
+winddirectionanim.begin = 0
+winddirectionanim.end = 1
+winddirectionanim.duration = 10 * 1000
 
 loop((dt) => {
     dt /= 1000
     dt = clamp(dt,0.002,0.10)
-    ctxt.clearRect(0,0,500,500)
+    // ctxt.clearRect(0,0,screensize.x,screensize.y)
+    ctxt.fillStyle = `hsl(${backgroundanim.get()},100%,50%)`
     for(var boid of boids){
         cacheBoid(boid)
     }
-    
+    // if(mousedown){
+    //     debugger
+    // }
     for(var boid of boids){
         var acc = new Vector(0,0)
 
@@ -62,16 +87,17 @@ loop((dt) => {
         }
 
         if(dst2mousepos.length() > 0){
-            acc.add(dst2mousepos.c().normalize().scale(clamp(map(dst2mousepos.length(),80,100,-300,0),-300,0)))
+            acc.add(dst2mousepos.c().normalize().scale(clamp(map(dst2mousepos.length(),130,150,-300,0),-300,0)))
         }
         
         
         acc.add(sepforce)
         acc.add(cohforce)
         acc.add(aliforce)
-        clampMagnitude(acc,0,100)
+        acc.add(rotate2d(new Vector(0,-1),winddirectionanim.get()).scale(windstrength))
+        clampMagnitude(acc,0,300)
         boid.speed.add(acc.scale(dt))
-        clampMagnitude(boid.speed,80,130)
+        clampMagnitude(boid.speed,10,130)
         boid.pos.add(boid.speed.c().scale(dt))
         boid.pos.x = mod(boid.pos.x,screensize.x)
         boid.pos.y = mod(boid.pos.y,screensize.y)
