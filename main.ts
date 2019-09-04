@@ -5,7 +5,7 @@
 /// <reference path="projectutils.ts" />
 
 
-var screensize = new Vector(document.documentElement.clientWidth,document.documentElement.clientHeight-4)
+var screensize = new Vector(document.documentElement.clientWidth,document.documentElement.clientHeight)
 
 var crret = createCanvas(screensize.x,screensize.y)
 var canvas = crret.canvas
